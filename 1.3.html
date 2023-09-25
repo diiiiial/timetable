@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<!-- TimeTable Ver. 1.3 -->
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>時間割</title>
+    </head>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        .timetable {
+            padding: 0;
+            margin: 0;
+        }
+        tr, .timetable td {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .timetable .time {
+            width: 5%;
+        }
+        .timetable td:first-child {
+            text-align: center;
+        }
+        .timetable button {
+            width: 100%;
+            height: 7em;
+            padding: 0.1em;
+        }
+        .timetable p {
+            padding: 0;
+            max-width: 100%;
+        }
+        .subject {
+            box-sizing: content-box;
+            line-height: 1.2em;
+            height: 3.4em;
+            margin:0 0 0em 0;
+            text-align: left; 
+            vertical-align: bottom;
+            font-weight: bold;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+            overflow: hidden;
+        }
+        .info {
+            height: 1.2em;
+            margin: 0;
+            text-align: right; 
+            vertical-align: bottom;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        #import {
+            margin: 0;
+            padding: 0;
+            border: 0 solid black;
+            width: auto;
+        }
+        .detail .item {
+            width: 15%;
+        }
+        .detail .content {
+            width: 70%;
+        }
+        input, textarea {
+            width: 100%;
+            font-family: initial;
+            font-size: 100%;
+            border-width: 1px;
+            border-style: solid;
+            border-color: gray;
+            padding: 2px;
+        }
+        button, #import {
+            font-size: 85%;
+        }
+        .detail input {
+            height: 2em;
+        }
+        .detail textarea {
+            height: 10em;
+        }
+    </style>
+    <body>
+        <script>
+            window.addEventListener('DOMContentLoaded', function(){
+                var subject = document.getElementById('subject');
+                var room = document.getElementById('room');
+                var teacher = document.getElementById('teacher');
+                var syllabus = document.getElementById('syllabus');
+                var moodle = document.getElementById('moodle');
+                var note = document.getElementById('note');
+                var Week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+                load();
+                function load() {
+                    for (let i = 1; i <= 5; i++) {
+                        Week.forEach(element => {
+                            let time = element + i;
+                            getDetail(time);
+                            let array = [subject.value, room.value, teacher.value, syllabus.value, moodle.value, note.value]
+                            document.getElementById(time).innerHTML = '<p class="subject">' + array[0] + '</p><p class="info">' + array[1] + '</p><p class="info">' + array[2] + '</p>'
+                        });
+                    }
+                    subject.value = '';
+                    room.value = '';
+                    teacher.value = '';
+                    syllabus.value = '';
+                    moodle.value = '';
+                    note.value = '';
+                    document.getElementById('detail').innerHTML = '';
+                }
+
+                // ダイアログでファイルが選択された時
+                const File = document.getElementById("import");
+                File.addEventListener("change", function (event) {
+                    const file = event.target.files[0];
+                    //ファイルの情報を取得できた時に実行される
+                    console.log(file.type);
+
+                    //FileReaderのインスタンスを作成する
+                    let reader = new FileReader();
+
+                    //読み込んだファイルの中身を取得する
+                    reader.readAsText(file);
+
+                    //ファイルの中身を取得後に処理を行う
+                    reader.addEventListener( 'load', function() {
+                        let list = reader.result.split('\n');
+                        console.log(list);
+                        //CSVを配列に格納 dataArrはレスポンス
+                        let arr =[];
+                        //帰ってきているレスポンスを配列に格納する
+                        for(let i = 0; i <list.length; i++){
+                            arr[i] = list[i].split(',');
+                        }
+                        console.log(arr);
+
+                        arr.forEach(element =>{
+                            console.log(element)
+                            let time = element[0];
+                            for (let i = 1; i <= 5; i++) {
+                                element[i] = element[i].replace(/\r/g, '\n');
+                            }
+                            let array = [element[1], element[2], element[3], element[4], element[5], element[6]];
+                            if (window.localStorage) {
+                                let json = JSON.stringify(array, undefined, 1);
+                                localStorage.setItem(time, json);
+                            };
+                        });
+
+                        load();
+                    });
+                });
+            });
+
+            function outputBtn(Sub){
+                // i++;
+                save();
+                let coma = Sub.toLowerCase();
+                let Text = document.getElementById('detail');
+                console.log(coma);
+                getDetail(Sub);
+                Sub = Sub.replace('Mon', '月');
+                Sub = Sub.replace('Tue', '火');
+                Sub = Sub.replace('Wed', '水');
+                Sub = Sub.replace('Thu', '木');
+                Sub = Sub.replace('Fri', '金');
+                Text.innerHTML = Sub;
+            }
+
+            function go(page){
+                let element = document.getElementById(page);
+                if (page === 'syllabus' || page === 'moodle') {
+                    window.open(element.value, '_blank');
+                } else {
+                    window.open('https://inazo.hu-jagajaga.com/search?search=' + element.value, '_blank');
+                }
+            }
+
+            function save() {
+                let time = document.getElementById('detail').textContent;
+                time = time.replace('月', 'Mon');
+                time = time.replace('火', 'Tue');
+                time = time.replace('水', 'Wed');
+                time = time.replace('木', 'Thu');
+                time = time.replace('金', 'Fri');
+                if (time !== null && time !== undefined && time !== '') {
+                    let array = [subject.value, room.value, teacher.value, syllabus.value, moodle.value, note.value]
+                    if (window.localStorage) {
+                        let json = JSON.stringify(array, undefined, 1);
+                        localStorage.setItem(time , json);
+                    }
+                    document.getElementById(time).innerHTML = '<p class="subject">' + array[0] + '</p><p class="info">' + array[1] + '</p><p class="info">' + array[2] + '</p>'
+                }
+            }
+
+            function getDetail(Sub) {
+                if (window.localStorage) {
+                    let json = localStorage.getItem(Sub);
+                    let array = ['', '', '', '', '', ''];
+                    if (json === null || json === undefined){
+                        console.log('null');
+                    } else {
+                        array = JSON.parse(json);
+                    }
+                    subject.value = array[0];
+                    room.value = array[1];
+                    teacher.value = array[2];
+                    syllabus.value = array[3];
+                    moodle.value = array[4];
+                    note.value = array[5];
+                }
+            }
+
+            function exportToFile() {
+                save();
+                const Week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+                let str = "";
+                for (let i = 1; i <= 5; i++) {
+                    Week.forEach(element => {
+                        let time = element + i;
+                        let json = localStorage.getItem(time);
+                        let array = ['', '', '', '', '', '',];
+                        if (json === null || json === undefined){
+                            console.log('null');
+                        } else {
+                            array = JSON.parse(json);
+                        }
+                        str += time;
+                        for (let j = 0; j <= 5; j++) {
+                            array[j] = array[j].replace(/\n/g, '\r');
+                            str += ',' + array[j];
+                        }
+                        str += '\n';
+                    });
+                }
+                str = str.slice(0, -1);
+                let blob =new Blob([str],{type:"text/csv"}); //配列に上記の文字列(str)を設定
+                let link =document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download ="TimeTable.csv";
+                link.click();
+            }
+        </script>
+            
+        <div>
+        <table class="timetable">
+            <tr>
+                <th class="time"></th><th class="week">月</th><th class="week">火</th><th class="week">水</th><th class="week">木</th><th class="week">金</th>
+            </tr>
+            <!-- 1限 -->
+            <tr>
+                <td rowspan="2">1</td><td><span id="mon1"></span></td><td><span id="tue1"></span></td><td><span id="wed1"></span></td><td><span id="thu1"></span></td><td><span id="fri1"></span></td>
+            </tr>
+            <tr>
+                <td><button type="button" id="Mon1" onclick="outputBtn('Mon1')"><p>変更</p></button></td><td><button type="button" id="Tue1" onclick="outputBtn('Tue1')">変更</button></td><td><button type="button" id="Wed1" onclick="outputBtn('Wed1')">変更</button></td><td><button type="button" id="Thu1" onclick="outputBtn('Thu1')">変更</button></td><td><button type="button" id="Fri1" onclick="outputBtn('Fri1')">変更</button></td>
+            </tr>
+            <!-- 2限 -->
+            <tr>
+                <td rowspan="2">2</td><td><span id="mon2"></span></td><td><span id="tue2"></span></td><td><span id="wed2"></span></td><td><span id="thu2"></span></td><td><span id="fri2"></span></td>
+            </tr>
+            <tr>
+                <td><button type="button" id="Mon2" onclick="outputBtn('Mon2')"><p>変更</p></button></td><td><button type="button" id="Tue2" onclick="outputBtn('Tue2')">変更</button></td><td><button type="button" id="Wed2" onclick="outputBtn('Wed2')">変更</button></td><td><button type="button" id="Thu2" onclick="outputBtn('Thu2')">変更</button></td><td><button type="button" id="Fri2" onclick="outputBtn('Fri2')">変更</button></td>
+            </tr>
+            <!-- 3限 -->
+            <tr>
+                <td rowspan="2">3</td><td><span id="mon3"></span></td><td><span id="tue3"></span></td><td><span id="wed3"></span></td><td><span id="thu3"></span></td><td><span id="fri3"></span></td>
+            </tr>
+            <tr>
+                <td><button type="button" id="Mon3" onclick="outputBtn('Mon3')"><p>変更</p></button></td><td><button type="button" id="Tue3" onclick="outputBtn('Tue3')">変更</button></td><td><button type="button" id="Wed3" onclick="outputBtn('Wed3')">変更</button></td><td><button type="button" id="Thu3" onclick="outputBtn('Thu3')">変更</button></td><td><button type="button" id="Fri3" onclick="outputBtn('Fri3')">変更</button></td>
+            </tr>
+            <!-- 4限 -->
+            <tr>
+                <td rowspan="2">4</td><td><span id="mon4"></span></td><td><span id="tue4"></span></td><td><span id="wed4"></span></td><td><span id="thu4"></span></td><td><span id="fri4"></span></td>
+            </tr>
+            <tr>
+                <td><button type="button" id="Mon4" onclick="outputBtn('Mon4')"><p>変更</p></button></td><td><button type="button" id="Tue4" onclick="outputBtn('Tue4')">変更</button></td><td><button type="button" id="Wed4" onclick="outputBtn('Wed4')">変更</button></td><td><button type="button" id="Thu4" onclick="outputBtn('Thu4')">変更</button></td><td><button type="button" id="Fri4" onclick="outputBtn('Fri4')">変更</button></td>
+            </tr>
+            <!-- 5限 -->
+            <tr>
+                <td rowspan="2">5</td><td><span id="mon5"></span></td><td><span id="tue5"></span></td><td><span id="wed5"></span></td><td><span id="thu5"></span></td><td><span id="fri5"></span></td>
+            </tr>
+            <tr>
+                <td><button type="button" id="Mon5" onclick="outputBtn('Mon5')"><p>変更</p></button></td><td><button type="button" id="Tue5" onclick="outputBtn('Tue5')">変更</button></td><td><button type="button" id="Wed5" onclick="outputBtn('Wed5')">変更</button></td><td><button type="button" id="Thu5" onclick="outputBtn('Thu5')">変更</button></td><td><button type="button" id="Fri5" onclick="outputBtn('Fri5')">変更</button></td>
+            </tr>
+        </table>
+        </div>
+
+        <table class="detail">
+            <tr>
+                <td rowspan="7" class="item" style="text-align: center;"><p id="detail"></p></td>
+                <td class="item" onclick="go('subject')"><label for="subject">科目名</label></td>
+                <td class="content"><input type="text" id="subject" name="subject" value=""></td>
+            </tr>
+            <tr>
+                <td class="item"><label for="room">講義室</label></td>
+                <td class="content"><input type="text" id="room" name="room" value=""></td>
+            </tr>
+            <tr>
+                <td class="item" onclick="go('teacher')"><label for="teacher">担当教員</label></td>
+                <td class="content"><input type="text" id="teacher" name="teacher" value=""></td>
+            </tr>
+            <tr>
+                <td id="s_go" class="item" onclick="go('syllabus')">シラバス</td>
+                <td class="content"><input type="url" id="syllabus" name="syllabus" value=""></td>
+            </tr>
+            <tr>
+                <td id="m_go" class="item" onclick="go('moodle')">Moodle</td>
+                <td class="content"><input type="url" id="moodle" name="moodle" value=""></td>
+            </tr>
+            <tr>
+                <td class="item"><label for="note">メモ</label></td>
+                <td class="content"><textarea id="note" name="note" value=""></textarea></td>
+            </tr>
+            <tr>
+                <td class="item"><button type="button" id="save" onclick="save()">保存</button></td>
+                <td class="content"><button type="button" id="export" onclick="exportToFile()">出力</button><input type="file" id="import"></td>
+            </tr>
+        </table>
+    </body>
+</html>
